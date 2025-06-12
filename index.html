@@ -4,13 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Cyber Chatbot</title>
+    
+    <!-- FONTS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
+    
+    <!-- LIBRARIES FOR MARKDOWN RENDERING (Marked.js for conversion, DOMPurify for security) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+
     <style>
         :root {
             --primary-bg: #1a1a2e;
             --secondary-bg: #16213e;
+            --code-bg: #0f172a; /* New color for code blocks */
             --accent-color: #00e5ff;
             --text-color: #e0e0e0;
             --header-font: 'Orbitron', sans-serif;
@@ -74,18 +82,9 @@
             gap: 15px;
         }
         
-        /* Custom scrollbar for a cyber look */
-        #chatbox::-webkit-scrollbar {
-            width: 8px;
-        }
-        #chatbox::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        #chatbox::-webkit-scrollbar-thumb {
-            background-color: var(--accent-color);
-            border-radius: 10px;
-            border: 2px solid var(--secondary-bg);
-        }
+        #chatbox::-webkit-scrollbar { width: 8px; }
+        #chatbox::-webkit-scrollbar-track { background: transparent; }
+        #chatbox::-webkit-scrollbar-thumb { background-color: var(--accent-color); border-radius: 10px; border: 2px solid var(--secondary-bg); }
 
         .message {
             padding: 10px 15px;
@@ -109,20 +108,41 @@
             border-bottom-left-radius: 5px;
         }
         
-        /* Bot typing indicator */
-        .loader-message {
-            align-self: flex-start;
-            display: flex;
-            align-items: center;
-            gap: 5px;
+        /* NEW STYLES FOR MARKDOWN CONTENT */
+        .bot-message pre {
+            background-color: var(--code-bg);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            border: 1px solid #334a66;
+            white-space: pre-wrap; /* Wrap long lines in code blocks */
         }
-        .loader-message .dot {
-            width: 8px;
-            height: 8px;
-            background-color: rgba(224, 224, 224, 0.5);
-            border-radius: 50%;
-            animation: typing 1.4s infinite;
+        .bot-message code {
+            font-family: 'Courier New', Courier, monospace;
+            color: var(--accent-color);
         }
+        .bot-message pre code {
+            color: var(--text-color); /* Reset code color inside a pre block */
+        }
+        .bot-message a {
+            color: var(--accent-color);
+            text-decoration: none;
+        }
+        .bot-message a:hover {
+            text-decoration: underline;
+        }
+        .bot-message ul, .bot-message ol {
+            padding-left: 25px;
+        }
+        .bot-message li {
+            margin-bottom: 8px;
+        }
+        .bot-message strong {
+            color: #ffffff;
+        }
+
+        .loader-message { align-self: flex-start; display: flex; align-items: center; gap: 5px; }
+        .loader-message .dot { width: 8px; height: 8px; background-color: rgba(224, 224, 224, 0.5); border-radius: 50%; animation: typing 1.4s infinite; }
         .loader-message .dot:nth-child(2) { animation-delay: 0.2s; }
         .loader-message .dot:nth-child(3) { animation-delay: 0.4s; }
 
@@ -131,55 +151,13 @@
             30% { transform: translateY(-8px); }
         }
 
-        .input-area {
-            display: flex;
-            padding: 20px;
-            border-top: 1px solid rgba(0, 229, 255, 0.2);
-            background-color: rgba(0, 0, 0, 0.2);
-        }
+        .input-area { display: flex; padding: 20px; border-top: 1px solid rgba(0, 229, 255, 0.2); background-color: rgba(0, 0, 0, 0.2); }
+        #userInput { flex-grow: 1; padding: 12px 15px; border: 1px solid #334a66; border-radius: 25px; background-color: #1a1a2e; color: var(--text-color); font-size: 1rem; outline: none; transition: border-color 0.3s; }
+        #userInput:focus { border-color: var(--accent-color); }
 
-        #userInput {
-            flex-grow: 1;
-            padding: 12px 15px;
-            border: 1px solid #334a66;
-            border-radius: 25px;
-            background-color: #1a1a2e;
-            color: var(--text-color);
-            font-size: 1rem;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-
-        #userInput:focus {
-            border-color: var(--accent-color);
-        }
-
-        #sendButton {
-            width: 50px;
-            height: 50px;
-            border: none;
-            background-color: var(--accent-color);
-            color: var(--primary-bg);
-            border-radius: 50%;
-            cursor: pointer;
-            margin-left: 10px;
-            font-size: 1.5rem;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: background-color 0.3s, transform 0.2s;
-        }
-
-        #sendButton:hover {
-            background-color: #0ff;
-            transform: scale(1.1);
-        }
-        #sendButton:disabled {
-            background-color: #555;
-            cursor: not-allowed;
-            transform: scale(1);
-        }
-
+        #sendButton { width: 50px; height: 50px; border: none; background-color: var(--accent-color); color: var(--primary-bg); border-radius: 50%; cursor: pointer; margin-left: 10px; font-size: 1.5rem; display: flex; justify-content: center; align-items: center; transition: background-color 0.3s, transform 0.2s; }
+        #sendButton:hover { background-color: #0ff; transform: scale(1.1); }
+        #sendButton:disabled { background-color: #555; cursor: not-allowed; transform: scale(1); }
     </style>
 </head>
 <body>
@@ -189,9 +167,7 @@
             <h1>The Cyber Chatbot</h1>
             <p>created by Moe M.</p>
         </header>
-        <div id="chatbox">
-            <!-- Chat messages will appear here -->
-        </div>
+        <div id="chatbox"></div>
         <div class="input-area">
             <input type="text" id="userInput" placeholder="Type your message here..." onkeydown="if(event.key==='Enter'){sendMessage()}">
             <button id="sendButton" onclick="sendMessage()">➤</button>
@@ -202,35 +178,27 @@
         const chatbox = document.getElementById('chatbox');
         const userInput = document.getElementById('userInput');
         const sendButton = document.getElementById('sendButton');
-
-        // This is your live Vercel proxy URL.
         const PROXY_URL = 'https://my-v-p-jessicas-projects-31c5b025.vercel.app/api/chat';
 
         async function sendMessage() {
             const messageText = userInput.value.trim();
             if (!messageText) return;
-
             appendMessage('user', messageText);
             userInput.value = '';
             userInput.disabled = true;
             sendButton.disabled = true;
-            
             showTypingIndicator();
-
             try {
                 const response = await fetch(PROXY_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: messageText })
                 });
-
                 const data = await response.json();
                 removeTypingIndicator();
-                
                 if (!response.ok) {
                     throw new Error(data.error || 'An unknown network error occurred.');
                 }
-                
                 appendMessage('bot', data.reply);
             } catch (error) {
                 removeTypingIndicator();
@@ -242,6 +210,30 @@
             }
         }
         
+        function showTypingIndicator() { /* ... same as before ... */ }
+        function removeTypingIndicator() { /* ... same as before ... */ }
+        function scrollToBottom() { /* ... same as before ... */ }
+
+        // --- UPDATED appendMessage FUNCTION ---
+        function appendMessage(sender, text) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', `${sender}-message`);
+
+            if (sender === 'bot') {
+                // For bot messages, convert Markdown to sanitized HTML
+                const rawHtml = marked.parse(text);
+                messageElement.innerHTML = DOMPurify.sanitize(rawHtml);
+            } else {
+                // For user messages, just use plain text
+                messageElement.textContent = text;
+            }
+
+            chatbox.appendChild(messageElement);
+            scrollToBottom();
+        }
+
+        // Functions that didn't change are omitted for brevity in this comment,
+        // but are present in the full HTML above
         function showTypingIndicator() {
             const loader = document.createElement('div');
             loader.id = 'typing-indicator';
@@ -257,24 +249,14 @@
                 indicator.remove();
             }
         }
-
-        function appendMessage(sender, text) {
-            const messageElement = document.createElement('div');
-            messageElement.classList.add('message', `${sender}-message`);
-            messageElement.textContent = text;
-            chatbox.appendChild(messageElement);
-            scrollToBottom();
-        }
-
+        
         function scrollToBottom() {
             chatbox.scrollTop = chatbox.scrollHeight;
         }
 
-        // Add a welcome message when the page loads
         window.onload = () => {
             appendMessage('bot', 'Welcome! I am the Cyber Chatbot, powered by Groq and Llama 3. How can I assist you?');
         };
-
     </script>
 
 </body>
